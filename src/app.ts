@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use("/auth", authRouter);
 app.use("/author", createRouter<Author>("author", false));
-app.use("/course", createRouter<Course>("course", true, ["authors"]));
+app.use("/course", createRouter<Course>("course", true, "authors"));
 
 app.use((err, req, res, next) => {
   console.error(err);

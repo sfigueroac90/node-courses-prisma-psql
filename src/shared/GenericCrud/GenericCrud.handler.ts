@@ -2,11 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { CrudService } from "./GenericCrud.service";
 
 export class GenericHandler<E> {
-  constructor(
-    private crudService: CrudService<E>,
-    private owned?: boolean,
-    private connect?: string[]
-  ) {
+  constructor(private crudService: CrudService<E>, private owned?: boolean) {
     this.getAll = this.getAll.bind(this);
     this.get = this.get.bind(this);
     this.create = this.create.bind(this);
@@ -15,7 +11,13 @@ export class GenericHandler<E> {
   }
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const all = await this.crudService.getAll(this.connect);
+      const { start, count, textFragment } = req.query as any;
+      console.log({ start, count, textFragment });
+      const all = await this.crudService.getAll(
+        start && parseInt(start),
+        count && parseInt(count),
+        textFragment
+      );
       res.status(200);
       res.json(all);
     } catch (e) {
@@ -26,7 +28,7 @@ export class GenericHandler<E> {
   async get(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
-      const el = await this.crudService.getById(id, this.connect);
+      const el = await this.crudService.getById(id);
       res.status(200);
       res.json(el);
     } catch (e) {
@@ -40,8 +42,7 @@ export class GenericHandler<E> {
       const userId = req["user"]["id"];
       const retrievedEl = await this.crudService.create(
         el,
-        this.owned ? userId : undefined,
-        this.connect
+        this.owned ? userId : undefined
       );
       res.status(200);
       res.json(retrievedEl);
