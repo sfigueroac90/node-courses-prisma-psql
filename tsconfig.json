@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "sourceMap": false,
+    "outDir": "dist",
+    "strict": false,
+    "lib": ["ESNext"],
+    "esModuleInterop": true,
+    "skipDefaultLibCheck": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts"]
+}
