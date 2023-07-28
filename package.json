@@ -1,5 +1,5 @@
 {
-  "name": "courses-prisma-node-api",
+  "name": "ang-mentoring-courses-prisma-node-api",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
