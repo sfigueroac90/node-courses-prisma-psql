@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { Handler, Request } from "express";
 import {
   createNewUserService,
@@ -6,6 +7,7 @@ import {
 } from "./auth.service";
 import { comparePasswords, createJWT, hashPassword } from "./auth.helpers";
 import { User } from "@prisma/client";
+import { JWT_SECRET } from "./auth.constants";
 
 export const newUserHanlder: Handler = async (req, res, next) => {
   const user = req.body;
@@ -20,9 +22,9 @@ export const newUserHanlder: Handler = async (req, res, next) => {
 };
 
 export const loginHandler: Handler = async (req, res, next) => {
-  const { userName, password } = req.body;
+  const { login, userName, password } = req.body;
   try {
-    const user = await findUserByName(userName);
+    const user = await findUserByName(userName || login);
 
     if (comparePasswords(password, user.password)) {
       res.status(200);
@@ -39,9 +41,14 @@ export const userInfoHandler: Handler = async (
   res,
   next
 ) => {
-  const id = req.user!.id;
-  const user = await findUserById(id);
-  console.log({ user });
+  const userfromToken = jwt.verify(req.body.token, JWT_SECRET);
+  const user = await findUserById(userfromToken["id"]);
+  console.log({ ...user, login: user.userName });
   res.status(200);
-  res.json({ id: user.id, userName: "sf00", name: user.name });
+  res.json({
+    id: user.id,
+    userName: user.userName,
+    name: user.name,
+    login: user.userName,
+  });
 };

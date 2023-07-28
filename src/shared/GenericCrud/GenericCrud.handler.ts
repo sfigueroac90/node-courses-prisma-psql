@@ -14,8 +14,8 @@ export class GenericHandler<E> {
       const { start, count, textFragment } = req.query as any;
       console.log({ start, count, textFragment });
       const all = await this.crudService.getAll(
-        start && parseInt(start),
-        count && parseInt(count),
+        !!start && parseInt(start),
+        !!count && parseInt(count),
         textFragment
       );
       res.status(200);
@@ -55,11 +55,12 @@ export class GenericHandler<E> {
     try {
       const id = req.params.id;
       const el = req.body;
-      console.log({ req });
       if (id !== el.id) {
         throw Error("id does not match");
       }
+      console.log({ el });
       const retrievedEl = await this.crudService.update({ ...el });
+
       res.status(200);
       res.json(retrievedEl);
     } catch (e) {

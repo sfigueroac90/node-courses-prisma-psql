@@ -1,4 +1,7 @@
+import { connect } from "http2";
+import { query } from "express";
 import prisma from "../../prisma";
+import { text } from "stream/consumers";
 
 export interface CrudService<E> {
   getAll: (
@@ -9,17 +12,17 @@ export interface CrudService<E> {
   getById: (id: string) => Promise<E>;
   create: (entity: E, ownerId?: string) => Promise<E | undefined>;
   remove: (id: string) => Promise<E>;
-  update: (entity: E) => Promise<E>;
+  update: (entity: E, ownerId?: string) => Promise<E>;
 }
 
 type Key = keyof typeof prisma;
 export class BaseCrudService<E> implements CrudService<E> {
-  constructor(private key: Key) {}
+  constructor(private key: Key, searchFields?: string[]) {}
 
   async getAll(start?: number, count?: number) {
     const result = await (prisma[this.key] as any).findMany({
-      skip: start,
-      take: count,
+      skip: start ? start : undefined,
+      take: count ? start : undefined,
     });
     return result as E[];
   }
@@ -32,6 +35,7 @@ export class BaseCrudService<E> implements CrudService<E> {
   }
 
   async create(entity: E, ownerId?: string) {
+    console.log({ ownerId });
     const result = await (prisma[this.key] as any).create({
       data: {
         ...entity,
@@ -58,7 +62,12 @@ export class BaseCrudService<E> implements CrudService<E> {
 }
 
 export class ConnectedCrudService<E> implements CrudService<E> {
-  constructor(private key, private connectedField: string) {
+  constructor(
+    private key,
+    private sorter: any,
+    private connectedField: string,
+    private searchFields?: string[]
+  ) {
     this.create = this.create.bind(this);
     this.getById = this.getById.bind(this);
     this.getAll = this.getAll.bind(this);
@@ -67,18 +76,39 @@ export class ConnectedCrudService<E> implements CrudService<E> {
   }
 
   async getAll(start?: number, count?: number, textFragment?: string) {
-    const result = await(prisma[this.key] as any).findMany({
+    const searchQuery =
+      this.searchFields && !!textFragment
+        ? {
+            where: {
+              OR: this.searchFields.reduce(
+                (fields, field) => [
+                  ...fields,
+                  {
+                    [field]: {
+                      contains: textFragment.toLowerCase(),
+                      mode: "insensitive",
+                    },
+                  },
+                ],
+                []
+              ),
+            },
+          }
+        : {};
+    const result = await (prisma[this.key] as any).findMany({
       ...(this.connectedField
         ? { include: { [this.connectedField]: true } }
         : {}),
-      skip: start,
-      take: count,
+      ...searchQuery,
+      skip: start ? start : undefined,
+      take: count ? count : undefined,
+      ...(this.sorter ? { ...this.sorter } : {}),
     });
     return result as E[];
   }
 
   async getById(id: string) {
-    const result = await(prisma[this.key] as any).findUnique({
+    const result = await (prisma[this.key] as any).findUnique({
       where: { id },
       include: { [this.connectedField]: true },
     });
@@ -88,10 +118,10 @@ export class ConnectedCrudService<E> implements CrudService<E> {
   async create(entity: E, ownerId?: string) {
     const connected = entity[this.connectedField];
 
-    const result = await(prisma[this.key] as any).create({
+    const result = await (prisma[this.key] as any).create({
       data: {
         ...entity,
-        ...(ownerId ? { ownerId } : {}),
+        ...(ownerId ? { owner: { connect: { id: ownerId } } } : {}),
         ...(this.connectedField
           ? {
               [this.connectedField]: {
@@ -111,15 +141,22 @@ export class ConnectedCrudService<E> implements CrudService<E> {
     return result as E;
   }
 
-  async update(entity: E) {
+  async update(entity: E, ownerId: string) {
     const connected = entity[this.connectedField];
-    const result = await(prisma[this.key] as any).update({
+    const result = await (prisma[this.key] as any).update({
       where: { id: (entity as any).id },
       data: {
         ...entity,
-        [this.connectedField]: {
-          connect: connected.map((el) => ({ id: el.id })),
-        },
+
+        ...(this.connectedField
+          ? {
+              [this.connectedField]: {
+                connect: connected.map((el) => ({
+                  id: el.id,
+                })),
+              },
+            }
+          : {}),
       },
     });
     return result as E;

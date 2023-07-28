@@ -5,6 +5,6 @@ import { authProtect } from "./auth.middlewares";
 const authRouter = Router();
 authRouter.post("/signin", newUserHanlder);
 authRouter.post("/login", loginHandler);
-authRouter.get("/userinfo", authProtect, userInfoHandler);
+authRouter.post("/userinfo", userInfoHandler);
 
 export { authRouter };
