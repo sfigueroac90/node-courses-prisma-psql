@@ -1,3 +1,1 @@
-import { startServer } from "./server";
-
-startServer();
+export { default as createAppRouter } from "./router";

@@ -1,7 +1,4 @@
-import { connect } from "http2";
-import { query } from "express";
 import prisma from "../../prisma";
-import { text } from "stream/consumers";
 
 export interface CrudService<E> {
   getAll: (
@@ -35,7 +32,6 @@ export class BaseCrudService<E> implements CrudService<E> {
   }
 
   async create(entity: E, ownerId?: string) {
-    console.log({ ownerId });
     const result = await (prisma[this.key] as any).create({
       data: {
         ...entity,

@@ -3,7 +3,7 @@
     "sourceMap": false,
     "outDir": "dist",
     "strict": false,
-    "lib": ["ESNext"],
+    "lib": ["ES2022"],
     "esModuleInterop": true,
     "skipDefaultLibCheck": true
   },

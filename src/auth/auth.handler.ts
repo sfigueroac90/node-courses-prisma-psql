@@ -15,7 +15,6 @@ export const newUserHanlder: Handler = async (req, res, next) => {
   const user = req.body;
 
   const previousUser = await findUserByName(user.userName || user.login);
-  console.log({ previousUser });
   if (previousUser) {
     res.status(401);
     res.send("login.already_exists");
@@ -46,8 +45,6 @@ export const loginHandler: Handler = async (req, res, next) => {
   try {
     const user = await findUserByName(userName || login);
 
-    console.log({ user });
-
     if (user && (await comparePasswords(password, user?.password))) {
       res.status(200);
       res.json({ token: createJWT(user) });
@@ -55,7 +52,6 @@ export const loginHandler: Handler = async (req, res, next) => {
       throw Error("User/password incorrect");
     }
   } catch (e) {
-    console.log(e);
     res.status(401);
     res.send("Wrong username");
   }
@@ -68,7 +64,6 @@ export const userInfoHandler: Handler = async (
 ) => {
   const userfromToken = jwt.verify(req.body.token, JWT_SECRET);
   const user = await findUserById(userfromToken["id"]);
-  console.log({ ...user, login: user.userName, password: "" });
   res.status(200);
   res.json(removeField(user, "password"));
 };

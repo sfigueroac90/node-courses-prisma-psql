@@ -5,7 +5,6 @@ import { JWT_SECRET } from "./auth.constants";
 export const authProtect: Handler = (req, res, next) => {
   const token = req.headers["authorization"];
   const user = jwt.verify(token, JWT_SECRET);
-  console.log({ user });
   if (user) {
     req["user"] = user;
     next();
